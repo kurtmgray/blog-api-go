@@ -13,10 +13,7 @@ type Config struct {
 }
 
 func Load() *Config {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	_ = godotenv.Load()
 	return &Config{
 		MongoDB: os.Getenv("MONGO_DB"),
 		JWTSecret: os.Getenv("JWT_SECRET"),
