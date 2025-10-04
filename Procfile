@@ -1,1 +1,1 @@
-web: blog-api-go
+web: api
