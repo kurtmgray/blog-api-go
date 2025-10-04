@@ -39,6 +39,7 @@ func (rt *Router) Setup() *chi.Mux {
 
 	// global middleware
 	r.Use(chimiddleware.RequestID)
+	r.Use(chimiddleware.StripSlashes) 
 	r.Use(chimiddleware.RealIP)
 	r.Use(chimiddleware.Recoverer)
 	r.Use(rt.corsMiddleware.Handler)

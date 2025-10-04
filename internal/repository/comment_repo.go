@@ -14,7 +14,9 @@ import (
 type CommentRepository interface {
 	Create(ctx context.Context, comment *models.Comment) error
 	FindByPost(ctx context.Context, postID primitive.ObjectID) ([]models.Comment, error)
+	FindByPostWithAuthor(ctx context.Context, postID primitive.ObjectID) ([]models.CommentWithAuthor, error)
 	FindByID(ctx context.Context, id primitive.ObjectID) (*models.Comment, error)
+	FindByIDWithAuthor(ctx context.Context, id primitive.ObjectID) (*models.CommentWithAuthor, error)
 	Update(ctx context.Context, id primitive.ObjectID, text string) error
 	Delete(ctx context.Context, id primitive.ObjectID) error
 }
@@ -52,6 +54,46 @@ func (r *commentRepository) FindByPost(ctx context.Context, postID primitive.Obj
 	return comments, nil
 }
 
+func (r *commentRepository) FindByPostWithAuthor(ctx context.Context, postID primitive.ObjectID) ([]models.CommentWithAuthor, error) {
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: bson.D{{Key: "post", Value: postID}}}},
+		{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "users"},
+			{Key: "localField", Value: "author"},
+			{Key: "foreignField", Value: "_id"},
+			{Key: "as", Value: "authorData"},
+		}}},
+		{{Key: "$unwind", Value: bson.D{
+			{Key: "path", Value: "$authorData"},
+			{Key: "preserveNullAndEmptyArrays", Value: true},
+		}}},
+		{{Key: "$project", Value: bson.D{
+			{Key: "_id", Value: bson.D{{Key: "$toString", Value: "$_id"}}}, 
+			{Key: "text", Value: 1},
+			{Key: "timestamp", Value: 1},
+			{Key: "post", Value: 1},
+			{Key: "author", Value: bson.D{
+				{Key: "_id", Value: bson.D{{Key: "$toString", Value: "$authorData._id"}}}, {Key: "username", Value: "$authorData.username"},
+				{Key: "fname", Value: "$authorData.fname"},
+				{Key: "lname", Value: "$authorData.lname"},
+			}},
+		}}},
+	}
+
+	cursor, err := r.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var comments []models.CommentWithAuthor
+	if err = cursor.All(ctx, &comments); err != nil {
+		return nil, err
+	}
+
+	return comments, nil
+}
+
 func (r *commentRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*models.Comment, error) {
 	var comment models.Comment
 	err := r.collection.FindOne(ctx, bson.M{"_id": id}).Decode(&comment)
@@ -64,6 +106,51 @@ func (r *commentRepository) FindByID(ctx context.Context, id primitive.ObjectID)
 	}
 
 	return &comment, nil
+}
+
+func (r *commentRepository) FindByIDWithAuthor(ctx context.Context, id primitive.ObjectID) (*models.CommentWithAuthor, error) {
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: bson.D{{Key: "_id", Value: id}}}},
+		{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "users"},
+			{Key: "localField", Value: "author"},
+			{Key: "foreignField", Value: "_id"},
+			{Key: "as", Value: "authorData"},
+		}}},
+		{{Key: "$unwind", Value: bson.D{
+			{Key: "path", Value: "$authorData"},
+			{Key: "preserveNullAndEmptyArrays", Value: true},
+		}}},
+		{{Key: "$project", Value: bson.D{
+			{Key: "_id", Value: bson.D{{Key: "$toString", Value: "$_id"}}}, 
+			{Key: "text", Value: 1},
+			{Key: "timestamp", Value: 1},
+			{Key: "post", Value: 1},
+			{Key: "author", Value: bson.D{
+				{Key: "_id", Value: bson.D{{Key: "$toString", Value: "$authorData._id"}}}, {Key: "username", Value: "$authorData.username"},
+				{Key: "username", Value: "$authorData.username"},
+				{Key: "fname", Value: "$authorData.fname"},
+				{Key: "lname", Value: "$authorData.lname"},
+			}},
+		}}},
+	}
+
+	cursor, err := r.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var comments []models.CommentWithAuthor
+	if err = cursor.All(ctx, &comments); err != nil {
+		return nil, err
+	}
+
+	if len(comments) == 0 {
+		return nil, errors.New("comment not found")
+	}
+
+	return &comments[0], nil
 }
 
 func (r *commentRepository) Update(ctx context.Context, id primitive.ObjectID, text string) error {

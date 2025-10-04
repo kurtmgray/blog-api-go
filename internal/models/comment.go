@@ -15,6 +15,9 @@ type Comment struct {
 }
 
 type CommentWithAuthor struct {
-	Comment
-	AuthorData *User `json:"authorData,omitempty" bson:"authorData,omitempty"`
+	ID        string             `json:"_id" bson:"_id,omitempty"`
+	Post      primitive.ObjectID `json:"post" bson:"post"`
+	Author    *UserResponse      `json:"author,omitempty" bson:"author,omitempty"`
+	Text      string             `json:"text" bson:"text"`
+	Timestamp time.Time          `json:"timestamp" bson:"timestamp"`
 }

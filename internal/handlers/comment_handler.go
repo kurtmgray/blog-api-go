@@ -33,13 +33,17 @@ func (h *CommentHandler) GetPostComments(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	comments, err := h.commentRepo.FindByPost(r.Context(), postID)
+	comments, err := h.commentRepo.FindByPostWithAuthor(r.Context(), postID)
 	if err != nil {
 		respondJSON(w, http.StatusInternalServerError, map[string]interface{}{
 			"success": false,
 			"message": "Error fetching comments",
 		})
 		return
+	}
+
+	if comments == nil {
+		comments = []models.CommentWithAuthor{}
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
@@ -59,7 +63,7 @@ func (h *CommentHandler) GetComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	comment, err := h.commentRepo.FindByID(r.Context(), commentID)
+	comment, err := h.commentRepo.FindByIDWithAuthor(r.Context(), commentID)
 	if err != nil {
 		respondJSON(w, http.StatusNotFound, map[string]interface{}{
 			"success": false,
@@ -167,7 +171,7 @@ func (h *CommentHandler) UpdateComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// fetch updated comment
-	updatedComment, err := h.commentRepo.FindByID(r.Context(), commentID)
+	updatedComment, err := h.commentRepo.FindByIDWithAuthor(r.Context(), commentID)
 	if err != nil {
 		respondJSON(w, http.StatusNotFound, map[string]interface{}{
 			"success": false,

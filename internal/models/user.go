@@ -21,7 +21,7 @@ type User struct {
 }
 
 type UserResponse struct {
-	ID         string    `json:"id"`
+	ID         string    `json:"_id" bson:"_id"`
 	Username   string    `json:"username"`
 	Fname      string    `json:"fname"`
 	Lname      string    `json:"lname"`

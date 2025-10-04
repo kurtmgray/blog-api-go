@@ -17,6 +17,11 @@ type Post struct {
 }
 
 type PostWithAuthor struct {
-	Post
-	AuthorData *User `json:"authorData,omitempty" bson:"authorData,omitempty"`
+	ID        string        `json:"_id" bson:"_id,omitempty"`
+	Author    *UserResponse `json:"author,omitempty" bson:"author,omitempty"`
+	Title     string        `json:"title" bson:"title"`
+	Text      string        `json:"text" bson:"text"`
+	ImgURL    string        `json:"imgUrl,omitempty" bson:"imgUrl,omitempty"`
+	Published bool          `json:"published" bson:"published"`
+	Timestamp time.Time     `json:"timestamp" bson:"timestamp"`
 }

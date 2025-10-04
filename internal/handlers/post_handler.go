@@ -27,7 +27,7 @@ func NewPostHandler(postRepo repository.PostRepository, userRepo repository.User
 
 // GET /api/posts
 func (h *PostHandler) GetAllPosts(w http.ResponseWriter, r *http.Request) {
-	posts, err := h.postRepo.FindAll(r.Context())
+	posts, err := h.postRepo.FindAllWithAuthor(r.Context())
 	if err != nil {
 		respondJSON(w, http.StatusInternalServerError, map[string]interface{}{
 			"success": false,
@@ -55,7 +55,7 @@ func (h *PostHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := h.postRepo.FindByID(r.Context(), postID)
+	post, err := h.postRepo.FindByIDWithAuthor(r.Context(), postID)
 	if err != nil {
 		respondJSON(w, http.StatusNotFound, map[string]interface{}{
 			"success": false,
@@ -217,7 +217,7 @@ func (h *PostHandler) PatchPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// fetch updated post
-	updatedPost, err := h.postRepo.FindByID(r.Context(), postID)
+	updatedPost, err := h.postRepo.FindByIDWithAuthor(r.Context(), postID)
 	if err != nil {
 		respondJSON(w, http.StatusNotFound, map[string]interface{}{
 			"success": false,
